@@ -6,7 +6,14 @@
 ////////////////// USER DEFINED /////////////////
 #define LOG(x) std::cout << x << std::endl
 
-enum Drop { Base = 0, LionHeart = 8, Excalibur = 98 };
+void statLimit(knight& knight, int& maxHP)
+{
+    maxHP = (maxHP > 999) ? 999 : maxHP;
+    knight.HP = (knight.HP > maxHP) ? maxHP : knight.HP;
+    knight.level = (knight.level > 10) ? 10 : knight.level;
+    knight.antidote = (knight.antidote > 99) ? 99 : knight.antidote;   // NOT GIVEN ?
+    knight.gil = (knight.gil > 999) ? 999 : knight.gil;
+}
 
 bool areFriendlyNumbers(const int& HP, const int& gil)
 {
@@ -21,8 +28,37 @@ bool areFriendlyNumbers(const int& HP, const int& gil)
         gil_abd = (gil % i == 0) ? (gil_abd + i) : gil_abd;
     gil_abd = gil_abd / gil;
 
-    if (HP_abd == gil_abd) { return true; }
-    else return false;
+    if (HP_abd == gil_abd) 
+        return true;
+    else 
+        return false;
+}
+
+bool isPrime(const int& HP)
+{
+    if (HP == 1) { 
+        return false; 
+    }
+	for (int itr = 2; itr < HP / 2 + 1; itr++) { 
+		if (HP % itr == 0) { 
+			return false; 
+		} 
+	}
+    return true;
+}
+
+bool isSumOfPtgTriple(const int& HP)
+{
+    if (HP % 2 == 0 && HP != 888) {				// Sum of Pythagorean triples is always even
+        for (int x = 1; x < HP / 3 + 1; x++) {
+            for (int y = x + 1; y < HP - x + 1; y++) {
+                int z = HP - x - y;
+
+                if (x*x + y*y == z*z) { return true; }
+            }
+        }
+    }
+    return false;
 }
 
 int healthLoss(const int& event, const int& levelO)
@@ -42,10 +78,28 @@ int healthLoss(const int& event, const int& levelO)
 
 int levelUp(int& currentLevel, int desiredLevel, int& maxHP)
 {
-    currentLevel = desiredLevel;
     maxHP += (desiredLevel - currentLevel) * 100;
+    currentLevel = desiredLevel;
 }
 
+void heal(knight& knight, const int& maxHP, int& berryPoison)
+{
+    if (knight.HP < 1)
+    {
+        callPhoenix(knight, maxHP);
+        berryPoison = 0;
+    }
+    if (berryPoison)
+    {
+        if (knight.antidote > 0) {
+            knight.antidote--;
+            berryPoison = 0;
+        }
+        else {
+            berryPoison--;
+        } 
+    }
+}
 
 
 report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mode, int nPetal)
@@ -54,6 +108,7 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
     int bFlag;
     //fighting for the existence of mankind here
 
+    bFlag = 0;
     int maxHP = theKnight.HP;
 
     int currentCastle = 0;
@@ -72,41 +127,22 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
     bool gotGuinevere = false;
     bool gotExcalibur = false;
     bool gotMithril = false;
-    bool gotScarl = false;
+    bool gotScarlH = false;
 
-    bool beatUltimecia = false;
     bool beatOmg = false;
     bool odinKilled = false;
-
-    bool isDragonKnight = false;
-    bool isArthur = (theKnight.HP == 999) ? true : false;
-    bool isLancelot = (theKnight.HP == 888) ? true : false; 
-    bool isGuinevere = (theKnight.HP == 777) ? true : false; 
-    bool isPaladin = true;
-
 
     int berryPoison = 0;
     int metNina = 0;
     int gotLionHeart = 0;
-    int odinBuff = 0;
+    int metOdin = 0;
 
-    if (theKnight.HP == 1) { isPaladin = false; }
-	for (int itr = 2; itr < theKnight.HP / 2 + 1; itr++) { 
-		if (theKnight.HP % itr == 0) 
-		{ 
-			isPaladin = false; 
-		} 
-	}
+    bool isArthur = (theKnight.HP == 999) ? true : false;
+    bool isLancelot = (theKnight.HP == 888) ? true : false; 
+    bool isGuinevere = (theKnight.HP == 777) ? true : false; 
+    bool isPaladin = isPrime(theKnight.HP);
+    bool isDragonKnight = isSumOfPtgTriple(theKnight.HP);
 
-	if (theKnight.HP % 2 == 0 && !isLancelot) {				// Sum of Pythagorean triples is always even
-		for (int x = 1; x < theKnight.HP / 3 + 1; x++) {
-			for (int y = x + 1; y < theKnight.HP - x + 1; y++) {
-				int z = theKnight.HP - x - y;
-
-				if (x*x + y*y == z*z) { isDragonKnight = true; }
-			}
-		}
-	}
     
     if (isLancelot) { gotLancelot = true; }
     if (isGuinevere) { gotGuinevere = true; }
@@ -122,7 +158,7 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
         b = i % 10;
 		levelO = (i > 6) ? (b > 5 ? b : 5) : b;
 
-        bool normalWin = theKnight.level > levelO && gotExcalibur || gotLionHeart || odinBuff || isArthur || isLancelot;
+        bool normalWin = theKnight.level > levelO && gotExcalibur || gotLionHeart || metOdin || isArthur || isLancelot;
         bool eternalLove = gotLancelot && gotGuinevere && !gotExcalibur || (isArthur || isLancelot) && gotGuinevere || isGuinevere && gotLancelot;
 
         // DURING EVENTS
@@ -144,15 +180,20 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
             if (gotExcalibur || gotLionHeart) 
             { 
                 nWin++;
-                beatUltimecia = true;
-
-                if (berryPoison) { theKnight.HP = (theKnight.HP < 3) ? 1 : (theKnight.HP / 3); }
+                bFlag = 1;
+                if (berryPoison) 
+                { 
+                    theKnight.HP = (theKnight.HP < 3) ? 1 : (theKnight.HP / 3); 
+                }
             }
             else
             {
                 nLose++;
-                if (!gotMithril) { theKnight.HP = (theKnight.HP < 3) ? 1 : (theKnight.HP / 3); };
-            }  
+                if ( !(gotMithril || isGuinevere) ) 
+                { 
+                    theKnight.HP = (theKnight.HP < 3) ? 1 : (theKnight.HP / 3); 
+                };
+            }
         break;
         
         case 1:     // GIL FARM
@@ -163,22 +204,26 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
             if (normalWin || isPaladin)
             {
                 nWin++;
-
                 switch (theEvent)
                 {
                 case 1: theKnight.gil += 100; break;
-                case 2: theKnight.gil += 150; break;
+                case 2: theKnight.gil += 150; break;    // FEMALE AMAZON WARRIOR
                 case 3: theKnight.gil += 450; break;
                 case 4: theKnight.gil += 650; break;
                 case 5: theKnight.gil += 850; break;
                 }
-
-                if (berryPoison) { theKnight.HP -= healthLoss(theEvent, levelO); }
+                if (berryPoison) 
+                { 
+                    theKnight.HP -= healthLoss(theEvent, levelO); 
+                }
             }
             else
             {
                 nLose++;
-                if (!gotMithril) { theKnight.HP -= healthLoss(theEvent, levelO); }
+                if ( !(gotMithril || isGuinevere && theEvent == 2) ) 
+                { 
+                    theKnight.HP -= healthLoss(theEvent, levelO); 
+                }
             }
         break;
 
@@ -206,7 +251,7 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
             else
             {
                 nLose++;
-                if ( !(gotScarl || isGuinevere) ) { theKnight.gil /= 2; }
+                if ( !(gotScarlH || isGuinevere) ) { theKnight.gil /= 2; }
             }  
         break;
         
@@ -220,15 +265,15 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
                 {
                     if (berryPoison) 
                     { 
-                        if ( !(gotScarl || isGuinevere || isPaladin) ) { theKnight.gil -= 50; } 
+                        if ( !(gotScarlH || isGuinevere || isPaladin) ) { theKnight.gil -= 50; } 
                         berryPoison = 0; 
                     }
 
                     if (theKnight.gil > 0)
                     {
                         theKnight.HP = theKnight.HP + theKnight.gil;
-                        if ( !(gotScarl || isPaladin) ) 
-                        { 
+                        if ( !(gotScarlH || isPaladin) ) 
+                        {
                             theKnight.gil = (theKnight.HP > maxHP) ? (theKnight.HP - maxHP) : 0;
                             if (isGuinevere) { theKnight.gil += 50; }
                         }
@@ -246,7 +291,7 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
         case 9:     // DURIAN
             berryPoison = 0;
             theKnight.HP = maxHP;
-            nPetal = (nPetal + 5 > 99 || gotScarl) ? 99 : (nPetal + 5);
+            nPetal = (nPetal + 5 > 99 || gotScarlH) ? 99 : (nPetal + 5);
         break;
         
         case 10:    // ANTIDOTE
@@ -254,7 +299,7 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
         break;
         
         case 11:    // ODIN
-            if ( !(odinBuff || odinKilled) ) { odinBuff = 6; }
+            if ( !(metOdin || odinKilled) ) { metOdin = 6; }
         break;
         
         case 12:    // MERLIN
@@ -278,11 +323,10 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
                 nLose++;
                 if (!gotMithril) { theKnight.HP = 0; }
             }
-            
         break;
         
         case 14:    // HADES
-            if (odinBuff && !isDragonKnight) { odinBuff = 0; odinKilled = true; }
+            if (metOdin && !isDragonKnight) { metOdin = 0; odinKilled = true; }
 
             if (theKnight.level >= levelO || gotLionHeart)
             {
@@ -297,7 +341,7 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
         break;
         
         case 15:    // SCARLET HAKAMA
-            gotScarl = true;
+            gotScarlH = true;
         break;
         
         case 16:    // LOCKED DOOR
@@ -309,64 +353,32 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
         }   // END EVENT
 
         // AFTER EVENTS
-
         if (nPetal) { nPetal--; }
-        if (metNina) { metNina--; }
         if (gotLionHeart && !isPaladin) { gotLionHeart--; }
-        if (odinBuff) { odinBuff--; }
+        if (metNina) { metNina--; }
+        if (metOdin) { metOdin--; }
 
-        if (beatUltimecia) { bFlag = 1; break; }
+        if (bFlag) { break; }
 
         if (currentEvent++ == arrCastle[currentCastle].nEvent - 1)
         {
             levelUp(theKnight.level, theKnight.level + 1, maxHP);
-
-            currentCastle++;
+            currentCastle = ++currentCastle % nCastle;
             currentEvent = 0;
         }
 
-        if (currentCastle == nCastle)
-        {
-            currentCastle = 0;
-            currentEvent = 0;
-        }
-
-
-        if (theKnight.HP < 1)
-        {
-            callPhoenix(theKnight, maxHP);
-            berryPoison = 0;
-        }
-
-        if (berryPoison)
-        {
-            if (theKnight.antidote > 0)
-            {
-                theKnight.antidote--;
-                berryPoison = 0;
-            }
-            else
-            {
-                berryPoison--;
-            } 
-        }
-
-        maxHP = (maxHP > 999) ? 999 : maxHP;
-        theKnight.HP = (theKnight.HP > maxHP) ? maxHP : theKnight.HP;
-        theKnight.level = (theKnight.level > 10) ? 10 : theKnight.level;
-        theKnight.gil = (theKnight.gil > 999) ? 999 : theKnight.gil;
-        //if (--nPetal == 0) { break; }
-
+        heal(theKnight, maxHP, berryPoison);
+        statLimit(theKnight, maxHP);
     }
-
 
     // success or failure?	
     pReturn = (bFlag) ? new report : NULL;
 
-
-    pReturn->nPetal = nPetal;
-    pReturn->nWin = nWin;
-    pReturn->nLose = nLose;
-
+    if (bFlag)
+    {
+        pReturn->nPetal = nPetal;
+        pReturn->nWin = nWin;
+        pReturn->nLose = nLose;
+    }
     return pReturn;
 }

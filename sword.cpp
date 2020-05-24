@@ -3,8 +3,8 @@
 #define _definition_h_
 #endif
 
-////////////////// USER DEFINED /////////////////
-#define LOG(x) std::cout << x << std::endl    
+////////////////// USER DEFINED ///////////////// HAS OTHER LOGGING THAT NEEDS DELETION /////////////////////////////////
+
 
 // Mathematics functions
 void swap(int* a, int* b)
@@ -13,7 +13,6 @@ void swap(int* a, int* b)
     *a = *b;
     *b = temp;
 }
-
 void sortWithHash(int* array, int size)
 {
     if (size == 1) {
@@ -35,27 +34,21 @@ int GCD(int a, int b)
     else
         return GCD(b, a % b);
 }
-
 bool areFriendlyNumbers(int HP, int gil)
 {
-    long sod_HP = 0, sod_gil = 0;
-    int gcd;
+    double sod_HP = 0, sod_gil = 0;
 
     for (int i = 1; i < HP + 1; i++) {
         sod_HP = (HP % i == 0) ? (sod_HP + i) : sod_HP;
     }
-    gcd = GCD(HP, sod_HP);
-    HP /= gcd;
-    sod_HP /= gcd;
+    sod_HP /= HP;
 
     for (int i = 1; i < gil + 1; i++) {
         sod_gil = (gil % i == 0) ? (sod_gil + i) : sod_gil;
     }    
-    gcd = GCD(gil, sod_gil);
-    gil /= gcd;
-    sod_gil /= gcd;
+    sod_gil /= gil;
     
-    if (HP == gil && sod_HP == sod_gil) 
+    if (sod_HP == sod_gil)
         return true;
     else
         return false;
@@ -73,7 +66,6 @@ bool isPrime(const int& HP)
 	}
     return true;
 }
-
 bool isSumOfPtgTriple(const int& HP)
 {
     if (HP % 2 == 0 && HP != 888) {				// Sum of Pythagorean triples is always even
@@ -87,6 +79,7 @@ bool isSumOfPtgTriple(const int& HP)
     }
     return false;
 }
+
 
 // Contextual functions
 int healthLoss(const int& event, const int& levelO)
@@ -109,8 +102,7 @@ int levelUp(int& currentLevel, int desiredLevel, int& maxHP)
     maxHP += (desiredLevel - currentLevel) * 100;
     currentLevel = desiredLevel;
 }
-
-void heal(knight& knight, const int& maxHP, int& berryPoison)
+void healUp(knight& knight, const int& maxHP, int& berryPoison)
 {
     if (knight.HP < 1)
     {
@@ -128,40 +120,50 @@ void heal(knight& knight, const int& maxHP, int& berryPoison)
         } 
     }
 }
-
-void statLimit(knight& knight, int& maxHP)
+void limit(knight& knight, int& maxHP, int& nPetal)
 {
     maxHP = (maxHP > 999) ? 999 : maxHP;
+    nPetal = (nPetal > 99) ? 99 : nPetal;
     knight.HP = (knight.HP > maxHP) ? maxHP : knight.HP;
     knight.level = (knight.level > 10) ? 10 : knight.level;
     knight.antidote = (knight.antidote > 99) ? 99 : knight.antidote;   // NOT GIVEN ?
     knight.gil = (knight.gil > 999) ? 999 : knight.gil;
 }
 
-void pickOrMiss(const int& mode, int* & pick, const int& treasure, bool& gotTreasure)
+void nextChallenge(castle arrCastle[], const int& nCastle, int& currentCastle, int& currentEvent, knight& theKnight, int& maxHP)
 {
-    if (mode == 0 || mode == 2) {
-        gotTreasure = true;
-    }
-    else if (mode == 1) {  
-        // Mode 1
-        if (*pick == treasure) {
-            gotTreasure = true;
-            pick++; // Can point to unaccessed memory
-        }
+    if (currentEvent++ == arrCastle[currentCastle].nEvent - 1)
+    {
+        levelUp(theKnight.level, theKnight.level + 1, maxHP);
+        currentCastle = ++currentCastle % nCastle;
+        currentEvent = 0;
     }
 }
 
-report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mode, int nPetal)
+
+// Mode dependent fuctions
+void pickOrMiss(const int& mode, int* & pick, const int& treasure, bool& gotPaladin, bool& gotLancelot, bool& gotGuinevere)
 {
-    report* pReturn;
-    int bFlag;
-    //fighting for the existence of mankind here
+    if (mode == 0 || mode == 2 || mode == 1 && *pick == treasure) {
+        switch (treasure)
+        {
+        case 95: gotPaladin = true   ; break;
+        case 96: gotLancelot = true  ; break;
+        case 97: gotGuinevere = true ; break;
+        }
+        pick++;
+    }
+}
+void skipIfHaveItem(int* & mustPick, bool gotPaladin, bool gotLancelot, bool gotGuinevere)
+{
+    if (*mustPick == 95 && gotPaladin) { mustPick++; }
+    else if (*mustPick == 96 && gotLancelot) { mustPick++; }
+    else if (*mustPick == 97 && gotGuinevere) { mustPick++; }
+}
 
-    bFlag = 0;
-    int nWin  = 0;
-    int nLose = 0;
 
+void process(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& nPetal, int& bFlag, int& nWin, int& nLose)
+{
     int maxHP = theKnight.HP;
     int currentCastle   = 0;
     int currentEvent    = 0;
@@ -179,34 +181,29 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
         //     LOG("Must pick treasure " << mustHaveTreasure[itr]);
     int* mustPick = mustHaveTreasure;
 
+    // Identity flags
+    bool isArthur       = (theKnight.HP == 999) ? true : false; 
+    bool isLancelot     = (theKnight.HP == 888) ? true : false; 
+    bool isGuinevere    = (theKnight.HP == 777) ? true : false; 
+    bool isPaladin      = isPrime(theKnight.HP);
+    bool isDragonKnight = isSumOfPtgTriple(theKnight.HP);
+
     // One time flags
-    bool gotPaladin     = false;
-    bool gotLancelot    = false;
-    bool gotGuinevere   = false;
+    bool gotPaladin     = isPaladin;
+    bool gotLancelot    = isLancelot;
+    bool gotGuinevere   = isGuinevere;
     bool gotExcalibur   = false;
     bool gotMithril     = false;
     bool gotScarlH      = false;
 
     bool beatOmg    = false;
-    bool odinKilled = false;
+    bool killedOdin = false;
 
     // Count down flags
     int berryPoison  = 0;
     int gotLionHeart = 0;
     int metNina = 0;
     int metOdin = 0;
-
-    // Identity flags
-    bool isArthur       = (theKnight.HP == 999) ? true : false;
-    bool isLancelot     = (theKnight.HP == 888) ? true : false; 
-    bool isGuinevere    = (theKnight.HP == 777) ? true : false; 
-    bool isPaladin      = isPrime(theKnight.HP);
-    bool isDragonKnight = isSumOfPtgTriple(theKnight.HP);
-    
-    if (isPaladin)   { gotPaladin   = true; }
-    if (isLancelot)  { gotLancelot  = true; }
-    if (isGuinevere) { gotGuinevere = true; }
-
 
     while (nPetal || isArthur)
     {
@@ -217,29 +214,29 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
         b = i % 10;
 		levelO = (i > 6) ? (b > 5 ? b : 5) : b;
 
-        bool normalWin = theKnight.level > levelO || gotLionHeart || metOdin || isArthur || isLancelot;
-        bool eternalLove = gotLancelot && gotGuinevere && !gotExcalibur 
+        bool normalWin = theKnight.level >= levelO || gotLionHeart || metOdin || isArthur || isLancelot;
+        bool hasEternalLove = gotLancelot && gotGuinevere && !gotExcalibur 
                             || (isArthur || isLancelot) && gotGuinevere 
                             || isGuinevere && gotLancelot;
+
+        
+        if (mode == 1) { skipIfHaveItem(mustPick, gotPaladin, gotLancelot, gotGuinevere); }
 
         // DURING EVENTS
         switch (theEvent)
         {
         case 95:    // PALADIN SHIELD
-            pickOrMiss(mode, mustPick, theEvent, gotPaladin);
-        break;
         case 96:    // LANCELOT SPEAR
-            pickOrMiss(mode, mustPick, theEvent, gotLancelot);
+        case 97:    // GUINEVERE HAIR
+            pickOrMiss(mode, mustPick, theEvent, gotPaladin, gotLancelot, gotGuinevere);
         break;
-        case 97:    // GUINEVERE'S HAIR
-            pickOrMiss(mode, mustPick, theEvent, gotGuinevere);
-        break;
+        
         case 98:    // EXCALIBUR
-            if (gotPaladin && gotLancelot && gotPaladin || isArthur) { gotExcalibur = true; }
+            if (gotPaladin && gotLancelot && gotGuinevere || isArthur) { gotExcalibur = true; }
         break;
         case 99:    // ULTIMECIA
             if (gotExcalibur || gotLionHeart) 
-            { 
+            {
                 nWin++;
                 bFlag = 1;
                 if (berryPoison) 
@@ -265,14 +262,9 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
             if (normalWin || isPaladin)
             {
                 nWin++;
-                switch (theEvent)
-                {
-                case 1: theKnight.gil += 100; break;
-                case 2: theKnight.gil += 150; break;    // FEMALE AMAZON WARRIOR
-                case 3: theKnight.gil += 450; break;
-                case 4: theKnight.gil += 650; break;
-                case 5: theKnight.gil += 850; break;
-                }
+                int bonusGil[] = { 0, 100, 150, 450, 650, 850 };
+                theKnight.gil += bonusGil[theEvent];
+                
                 if (berryPoison) 
                 { 
                     theKnight.HP -= healthLoss(theEvent, levelO); 
@@ -321,22 +313,24 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
 
             if ( !areFriendlyNumbers(theKnight.HP, theKnight.gil) )
             {   
-                if (theKnight.gil < 50) { break; }
-                else
-                {
+                if (theKnight.gil < 50) { 
+                    break; 
+                }
+                else {
                     if (berryPoison) 
                     { 
-                        if ( !(gotScarlH || isGuinevere || isPaladin) ) { theKnight.gil -= 50; } 
                         berryPoison = 0; 
+                        if ( !(gotScarlH || isGuinevere || isPaladin) ) { theKnight.gil -= 50; } 
                     }
 
                     if (theKnight.gil > 0)
                     {
                         theKnight.HP = theKnight.HP + theKnight.gil;
-                        if ( !(gotScarlH || isPaladin) ) 
+                        if (isGuinevere) { theKnight.gil += 50; }
+                        
+                        if ( !(gotScarlH || isGuinevere ||isPaladin) ) 
                         {
                             theKnight.gil = (theKnight.HP > maxHP) ? (theKnight.HP - maxHP) : 0;
-                            if (isGuinevere) { theKnight.gil += 50; }
                         }
                     }
                 }
@@ -360,7 +354,7 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
         break;
         
         case 11:    // ODIN
-            if ( !(metOdin || odinKilled) ) { metOdin = 6; }
+            if ( !(metOdin || killedOdin) ) { metOdin = 6; }
         break;
         
         case 12:    // MERLIN
@@ -387,9 +381,9 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
         break;
         
         case 14:    // HADES
-            if (metOdin && !isDragonKnight) { metOdin = 0; odinKilled = true; }
+            if (metOdin && !isDragonKnight) { metOdin = 0; killedOdin = true; }
 
-            if (theKnight.level >= levelO || gotLionHeart || eternalLove)
+            if (theKnight.level >= levelO || gotLionHeart || hasEternalLove)
             {
                 nWin++;
                 gotMithril = true;
@@ -417,29 +411,65 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
         if (gotLionHeart && !isPaladin) { gotLionHeart--; }
         if (metNina) { metNina--; }
         if (metOdin) { metOdin--; }
-        
         if (mustPick > mustHaveTreasure + 2) { mustPick = mustHaveTreasure + 2; }
 
-        LOG("Must pick " << *mustPick);
+        healUp(theKnight, maxHP, berryPoison);
 
         if (nPetal) { nPetal--; }
-        if (bFlag) { break; }    
+        if (bFlag) { break; }
 
-        if (currentEvent++ == arrCastle[currentCastle].nEvent - 1)
-        {
-            levelUp(theKnight.level, theKnight.level + 1, maxHP);
-            currentCastle = ++currentCastle % nCastle;
-            currentEvent = 0;
-        }
+        nextChallenge(arrCastle, nCastle, currentCastle, currentEvent, theKnight, maxHP);
+        limit(theKnight, maxHP, nPetal);
 
-        heal(theKnight, maxHP, berryPoison);
-        statLimit(theKnight, maxHP);
+///////////////////////////////////////////////////////////////////////////// LOGGING
+static int once = 1;
+if (once++ == 1) {
+printf("\n");
+printf("Identity:   Paladin %d   DragonKnight %d \n", isPaladin, isDragonKnight);
+printf("   Csl   Evt   Code  |    HP    lv   atd   gil   |  Petal  |  Psn  |  Odin  |  95  |  96  |  97  | Win | Lose |\n"); 
+printf("   ------\n"); }
+printf("   %d     %2d    %2d    |   %3d   %3d   %3d   %3d   |", currentCastle + 1, i, theEvent, theKnight.HP, theKnight.level, theKnight.antidote, theKnight.gil);
+printf("   %3d   |", nPetal);
+printf("   %3d |", berryPoison);
+printf("   %3d  |", metOdin);
+printf(" %3c  |", (gotPaladin)   ? 'x' : ' ');
+printf(" %3c  |", (gotLancelot)  ? 'x' : ' ');
+printf(" %3c  |", (gotGuinevere) ? 'x' : ' ');
+printf(" %3d  |", nWin);
+printf(" %3d  |", nLose);
+if (gotExcalibur)       printf("   Ex");
+if (gotLionHeart)       printf("   LnHrt: %d", gotLionHeart);
+if (gotScarlH)          printf("   Scrl");
+if (gotMithril)         printf("   Mith");
+if (hasEternalLove)     printf("   <3");
+// if (killedOdin)         printf("   Odin-X");
+// if (beatOmg)            printf("   OMG-X");
+printf("\n");
+if (!currentEvent) 
+printf("   ------\n");
+///////////////////////////////////////////////////////////////////////////////////////////////
+        
+        
     }
+}
 
+
+
+
+report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mode, int nPetal)
+{
+    report* pReturn;
+    int bFlag;
+    //fighting for the existence of mankind here
+
+    bFlag = 0;
+    int nWin  = 0;
+    int nLose = 0;
+
+    process(theKnight, arrCastle, nCastle, mode, nPetal, bFlag, nWin, nLose);
 
     // success or failure?	
     pReturn = (bFlag) ? new report : NULL;
-
     if (bFlag)
     {
         pReturn->nPetal = nPetal;
@@ -448,3 +478,5 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
     }
     return pReturn;
 }
+
+

@@ -26,34 +26,23 @@ void sortWithHash(int* array, int size)
     }
     sortWithHash(array, size - 1);
 }
-
-int GCD(int a, int b)
-{
-    if (b == 0)
-        return a;
-    else
-        return GCD(b, a % b);
-}
 bool areFriendlyNumbers(int HP, int gil)
 {
-    double sod_HP = 0, sod_gil = 0;
+    long sum_of_divisors_HP = 0, sum_of_divisors_gil = 0;
 
     for (int i = 1; i < HP + 1; i++) {
-        sod_HP = (HP % i == 0) ? (sod_HP + i) : sod_HP;
+        sum_of_divisors_HP += (HP % i == 0) ? i : 0;
     }
-    sod_HP /= HP;
 
     for (int i = 1; i < gil + 1; i++) {
-        sod_gil = (gil % i == 0) ? (sod_gil + i) : sod_gil;
+        sum_of_divisors_gil += (gil % i == 0) ? i : 0;
     }    
-    sod_gil /= gil;
     
-    if (sod_HP == sod_gil)
+    if (sum_of_divisors_HP * gil == sum_of_divisors_gil * HP)
         return true;
     else
         return false;
 }
-
 bool isPrime(const int& HP)
 {
     if (HP == 1) { 
@@ -66,7 +55,15 @@ bool isPrime(const int& HP)
 	}
     return true;
 }
-bool isSumOfPtgTriple(const int& HP)
+int factorial(int n)
+{
+    if (n == 1) return 1;
+
+    return n * factorial(n - 1);
+}
+
+// Contextual functions
+bool isADragonKnight(const int& HP)
 {
     if (HP % 2 == 0 && HP != 888) {				// Sum of Pythagorean triples is always even
         for (int x = 1; x < HP / 3 + 1; x++) {
@@ -80,21 +77,18 @@ bool isSumOfPtgTriple(const int& HP)
     return false;
 }
 
-
-// Contextual functions
-int healthLoss(const int& event, const int& levelO)
+void loseHP(knight& theKnight, const int& event, const int& levelO)
 {
-    float baseDamage;
-    switch (event)
+    if (event == 99)
     {
-    case 1: baseDamage = 1; break;
-    case 2:	baseDamage = 1.5; break;
-    case 3:	baseDamage = 4.5; break;
-    case 4:	baseDamage = 6.5; break;
-    case 5:	baseDamage = 8.5; break;
+        theKnight.HP = (theKnight.HP < 3) ? 1 : (theKnight.HP / 3);
     }
-    int damage = baseDamage * levelO * 10;
-    return damage;
+    else
+    {
+        float baseDamage[] = { 0.0, 1.0, 1.5, 4.5, 6.5, 8.5 };
+        int damage = baseDamage[event] * levelO * 10;
+        theKnight.HP -= damage;
+    }
 }
 
 int levelUp(int& currentLevel, int desiredLevel, int& maxHP)
@@ -126,11 +120,11 @@ void limit(knight& knight, int& maxHP, int& nPetal)
     nPetal = (nPetal > 99) ? 99 : nPetal;
     knight.HP = (knight.HP > maxHP) ? maxHP : knight.HP;
     knight.level = (knight.level > 10) ? 10 : knight.level;
-    knight.antidote = (knight.antidote > 99) ? 99 : knight.antidote;   // NOT GIVEN ?
+    knight.antidote = (knight.antidote > 99) ? 99 : knight.antidote;
     knight.gil = (knight.gil > 999) ? 999 : knight.gil;
 }
 
-void nextChallenge(castle arrCastle[], const int& nCastle, int& currentCastle, int& currentEvent, knight& theKnight, int& maxHP)
+void nextChallenge(castle* arrCastle, const int& nCastle, int& currentCastle, int& currentEvent, knight& theKnight, int& maxHP)
 {
     if (currentEvent++ == arrCastle[currentCastle].nEvent - 1)
     {
@@ -161,9 +155,62 @@ void skipIfHaveItem(int* & mustPick, bool gotPaladin, bool gotLancelot, bool got
     else if (*mustPick == 97 && gotGuinevere) { mustPick++; }
 }
 
-
-void process(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& nPetal, int& bFlag, int& nWin, int& nLose)
+void makePermutation(int* srcArray, int* desArray, int leftValue, int rightValue, int& pmtCount)
 {
+    if (leftValue == rightValue)
+    {
+        int startPoint = (rightValue + 1) * pmtCount;
+        for (int i = startPoint; i < startPoint + rightValue + 1; i++)
+        {
+            desArray[i] = srcArray[i % (rightValue + 1)];
+        }
+        pmtCount++;
+    }
+    else
+    {
+        for (int i = leftValue; i <= rightValue; i++)
+        {
+            swap(srcArray + leftValue, srcArray + i);
+            makePermutation(srcArray, desArray, leftValue + 1, rightValue, pmtCount);
+
+            // Backtrack ?
+            swap(srcArray + leftValue, srcArray + i);
+        }
+    } 
+}
+
+void saveOptimalRoute(int bFlag, int petal, knight& bestKnight, const knight& theKnight, report& bestReport, int win, int lose)
+{
+    static int optimalPetal = 0;
+    if (bFlag)
+    {
+        if (petal > optimalPetal)
+        {
+            optimalPetal = petal;
+
+            bestReport.nPetal   = petal;
+            bestReport.nWin     = win;
+            bestReport.nLose   = lose;
+
+            bestKnight = theKnight;
+
+            // printf("Knight: %d %d %d %d\n", bestKnight.HP, bestKnight.level, bestKnight.antidote, bestKnight.gil);
+            // printf("Optimal petal %d\n", optimalPetal);
+            // printf("Win %d\n", bestReport.nWin);
+            // printf("Lose %d\n", bestReport.nLose);
+        }
+    }
+}
+
+
+
+// Calculate and return "corresponding" bFlag, along with nWin and nLose
+void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& nPetal, int& bFlag, int& nWin, int& nLose)
+{
+    bFlag = 0;
+    nWin = 0;
+    nLose = 0;
+
     int maxHP = theKnight.HP;
     int currentCastle   = 0;
     int currentEvent    = 0;
@@ -186,7 +233,7 @@ void process(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& 
     bool isLancelot     = (theKnight.HP == 888) ? true : false; 
     bool isGuinevere    = (theKnight.HP == 777) ? true : false; 
     bool isPaladin      = isPrime(theKnight.HP);
-    bool isDragonKnight = isSumOfPtgTriple(theKnight.HP);
+    bool isDragonKnight = isADragonKnight(theKnight.HP);
 
     // One time flags
     bool gotPaladin     = isPaladin;
@@ -240,8 +287,8 @@ void process(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& 
                 nWin++;
                 bFlag = 1;
                 if (berryPoison) 
-                { 
-                    theKnight.HP = (theKnight.HP < 3) ? 1 : (theKnight.HP / 3); 
+                {
+                    loseHP(theKnight, theEvent, levelO);
                 }
             }
             else
@@ -249,7 +296,7 @@ void process(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& 
                 nLose++;
                 if ( !(gotMithril || isGuinevere) ) 
                 { 
-                    theKnight.HP = (theKnight.HP < 3) ? 1 : (theKnight.HP / 3); 
+                    loseHP(theKnight, theEvent, levelO);
                 }
             }
         break;
@@ -267,7 +314,7 @@ void process(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& 
                 
                 if (berryPoison) 
                 { 
-                    theKnight.HP -= healthLoss(theEvent, levelO); 
+                    loseHP(theKnight, theEvent, levelO);
                 }
             }
             else
@@ -275,7 +322,7 @@ void process(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& 
                 nLose++;
                 if ( !(gotMithril || isGuinevere && theEvent == 2) ) 
                 { 
-                    theKnight.HP -= healthLoss(theEvent, levelO); 
+                    loseHP(theKnight, theEvent, levelO);
                 }
             }
         break;
@@ -322,10 +369,9 @@ void process(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& 
                         berryPoison = 0; 
                         if ( !(gotScarlH || isGuinevere || isPaladin) ) { theKnight.gil -= 50; } 
                     }
-
                     if (theKnight.gil > 0)
                     {
-                        theKnight.HP = theKnight.HP + theKnight.gil;
+                        theKnight.HP += theKnight.gil;
                         if (isGuinevere) { theKnight.gil += 50; }
                         
                         if ( !(gotScarlH || isGuinevere ||isPaladin) ) 
@@ -383,7 +429,7 @@ void process(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& 
         case 14:    // HADES
             if (metOdin && !isDragonKnight) { metOdin = 0; killedOdin = true; }
 
-            if (theKnight.level >= levelO || gotLionHeart || hasEternalLove)
+            if (theKnight.level >= levelO || gotLionHeart || hasEternalLove || isDragonKnight && metOdin)
             {
                 nWin++;
                 gotMithril = true;
@@ -421,40 +467,115 @@ void process(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& 
         nextChallenge(arrCastle, nCastle, currentCastle, currentEvent, theKnight, maxHP);
         limit(theKnight, maxHP, nPetal);
 
-///////////////////////////////////////////////////////////////////////////// LOGGING
-static int once = 1;
-if (once++ == 1) {
-printf("\n");
-printf("Identity:   Paladin %d   DragonKnight %d \n", isPaladin, isDragonKnight);
-printf("   Csl   Evt   Code  |    HP    lv   atd   gil   |  Petal  |  Psn  |  Odin  |  95  |  96  |  97  | Win | Lose |\n"); 
-printf("   ------\n"); }
-printf("   %d     %2d    %2d    |   %3d   %3d   %3d   %3d   |", currentCastle + 1, i, theEvent, theKnight.HP, theKnight.level, theKnight.antidote, theKnight.gil);
-printf("   %3d   |", nPetal);
-printf("   %3d |", berryPoison);
-printf("   %3d  |", metOdin);
-printf(" %3c  |", (gotPaladin)   ? 'x' : ' ');
-printf(" %3c  |", (gotLancelot)  ? 'x' : ' ');
-printf(" %3c  |", (gotGuinevere) ? 'x' : ' ');
-printf(" %3d  |", nWin);
-printf(" %3d  |", nLose);
-if (gotExcalibur)       printf("   Ex");
-if (gotLionHeart)       printf("   LnHrt: %d", gotLionHeart);
-if (gotScarlH)          printf("   Scrl");
-if (gotMithril)         printf("   Mith");
-if (hasEternalLove)     printf("   <3");
-// if (killedOdin)         printf("   Odin-X");
-// if (beatOmg)            printf("   OMG-X");
-printf("\n");
-if (!currentEvent) 
-printf("   ------\n");
+////////////////////////////// LOGGING ////////////////////////////////////////////////////////
+// {
+//     static int once = 1;
+//     if (once++ == 1) {
+//     printf("\n");
+//     printf("Identity:   %s%s\n", (isPaladin) ? "Paladin" : "", (isDragonKnight) ? "DragonKnight" : "");
+//     printf("   Csl   Evt   Code  |    HP    lv   atd   gil   | Petal | Psn |  Odin  |  95  |  96  |  97  | Win | Lose |\n"); 
+//     printf("   ------\n"); }
+//     printf("   %d     %2d    %2d    |   %3d   %3d   %3d   %3d   |", currentCastle + 1, i, theEvent, theKnight.HP, theKnight.level, theKnight.antidote, theKnight.gil);
+//     printf("  %3d  |", nPetal);
+//     printf("%3d  |", berryPoison);
+//     printf("   %3d  |", metOdin);
+//     printf(" %3c  |", (gotPaladin)   ? 'x' : ' ');
+//     printf(" %3c  |", (gotLancelot)  ? 'x' : ' ');
+//     printf(" %3c  |", (gotGuinevere) ? 'x' : ' ');
+//     printf(" %3d |", nWin);
+//     printf(" %3d  |", nLose);
+//     if (gotExcalibur)       printf("   Ex");
+//     if (gotLionHeart)       printf("   LnHrt: %d", gotLionHeart);
+//     if (gotScarlH)          printf("   Scrl");
+//     if (gotMithril)         printf("   Mith");
+//     if (hasEternalLove)     printf("   <3");
+//     // if (killedOdin)         printf("   Odin-X");
+//     // if (beatOmg)            printf("   OMG-X");
+//     printf("\n");
+//     if (!currentEvent) 
+//     printf("   ------\n");
+// }
 ///////////////////////////////////////////////////////////////////////////////////////////////
-        
         
     }
 }
 
+void process2(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& nPetal, int& bFlag, int& nWin, int& nLose)
+{
+    // Main idea: Go through every possible route and select the optimal result
+
+    // Create an array of PERMUTED INDEX
+    // Ex: 2 castles: { 0,1,  1,0 }                                         nPerm = 2
+    //     3 castles: { 0,1,2,  0,2,1,  1,0,2,  1,2,0,  2,0,1,  2,1,0 }     nPerm = 6
 
 
+    int castleIdx[] = { 0, 1, 2, 3, 4 };                                // List of possible indexes
+    int* arrPermCastleIdx = new int[ nCastle * factorial(nCastle) ];    // A permuted array of indexes
+    int nPerm = 0;                                                      //  = factorial(nCastle)
+    
+    makePermutation(castleIdx, arrPermCastleIdx, 0, nCastle - 1, nPerm);
+
+    // Save the best stat a.k.a optimal stat
+    report bestReport;
+    {
+        bestReport.nPetal = 0;
+        bestReport.nWin = 0;
+        bestReport.nLose = 0;
+    }
+    knight bestKnight = theKnight;  
+    
+    // Because we will be modifying these
+    knight originalKnight = theKnight; 
+    int originalPetal = nPetal;
+
+    // Jump through routes and record optimal result to bestKnight and bestReport
+    for (int currentRoute = 0; currentRoute < nPerm; currentRoute++) 
+    {
+        castle* tempCastle = new castle[nCastle];
+        
+        for (int Index = 0; Index < nCastle; Index++) 
+        {
+            // Copy -> Make event happen in order
+            // Ex: tempCastle[0] -> arrCastle[2]
+            //     tempCastle[1] -> arrCastle[0]
+            //     tempCastle[2] -> arrCastle[1]
+
+            int NewIndex =  arrPermCastleIdx[currentRoute * nCastle + Index];
+            tempCastle[Index] = arrCastle[NewIndex];
+            
+            // printf("\n");
+            // printf("Current castle: %d\n", Index);
+            // printf("Castle index: %d ", NewIndex);
+            // printf("\n");
+            // printf("Venture in order: %d %d %d %d", 
+            // (tempCastle[Index]).arrEvent[0],
+            // (tempCastle[Index]).arrEvent[1],
+            // (tempCastle[Index]).arrEvent[2],
+            // (tempCastle[Index]).arrEvent[3]);
+            // printf("\n");
+        }
+        
+        // Fresh start for each route
+        theKnight = originalKnight;
+        nPetal = originalPetal;
+
+        process1(theKnight, tempCastle, nCastle, mode, nPetal, bFlag, nWin, nLose);
+        
+        // Save route with max nPetal left into bestKnight and bestReport
+        saveOptimalRoute(bFlag, nPetal, bestKnight, theKnight, bestReport, nWin, nLose);
+        
+        delete[] tempCastle;
+    }
+
+    // Synchronize with best result
+    bFlag = bestReport.nPetal;
+    theKnight = bestKnight;
+    nPetal  = bestReport.nPetal;
+    nWin    = bestReport.nWin;
+    nLose   = bestReport.nLose;
+
+    delete[] arrPermCastleIdx;
+}
 
 report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mode, int nPetal)
 {
@@ -462,19 +583,25 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
     int bFlag;
     //fighting for the existence of mankind here
 
-    bFlag = 0;
-    int nWin  = 0;
+    int nWin = 0;
     int nLose = 0;
 
-    process(theKnight, arrCastle, nCastle, mode, nPetal, bFlag, nWin, nLose);
-
+    if (mode == 0 || mode == 1)
+    {
+        process1(theKnight, arrCastle, nCastle, mode, nPetal, bFlag, nWin, nLose);
+    }
+    else if (mode == 2)
+    {
+        process2(theKnight, arrCastle, nCastle, mode, nPetal, bFlag, nWin, nLose);
+    }
+    
     // success or failure?	
     pReturn = (bFlag) ? new report : NULL;
-    if (bFlag)
+    if (pReturn)
     {
         pReturn->nPetal = nPetal;
-        pReturn->nWin = nWin;
-        pReturn->nLose = nLose;
+        pReturn->nWin   = nWin;
+        pReturn->nLose  = nLose;
     }
     return pReturn;
 }

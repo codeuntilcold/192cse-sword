@@ -3,9 +3,6 @@
 #define _definition_h_
 #endif
 
-////////////////// USER DEFINED ///////////////// HAS OTHER LOGGING THAT NEEDS DELETION /////////////////////////////////
-
-
 // Mathematics functions
 void swap(int* a, int* b)
 {
@@ -63,7 +60,7 @@ int factorial(int n)
 }
 
 // Contextual functions
-bool isADragonKnight(const int& HP)
+bool isDrgKnight(const int& HP)
 {
     if (HP % 2 == 0 && HP != 888) {				// Sum of Pythagorean triples is always even
         for (int x = 1; x < HP / 3 + 1; x++) {
@@ -90,8 +87,7 @@ void loseHP(knight& theKnight, const int& event, const int& levelO)
         theKnight.HP -= damage;
     }
 }
-
-int levelUp(int& currentLevel, int desiredLevel, int& maxHP)
+void levelUp(int& currentLevel, int desiredLevel, int& maxHP)
 {
     maxHP += (desiredLevel - currentLevel) * 100;
     currentLevel = desiredLevel;
@@ -123,8 +119,7 @@ void limit(knight& knight, int& maxHP, int& nPetal)
     knight.antidote = (knight.antidote > 99) ? 99 : knight.antidote;
     knight.gil = (knight.gil > 999) ? 999 : knight.gil;
 }
-
-void nextChallenge(castle* arrCastle, const int& nCastle, int& currentCastle, int& currentEvent, knight& theKnight, int& maxHP)
+void gotoNextChallenge(castle* arrCastle, const int& nCastle, int& currentCastle, int& currentEvent, knight& theKnight, int& maxHP)
 {
     if (currentEvent++ == arrCastle[currentCastle].nEvent - 1)
     {
@@ -133,7 +128,6 @@ void nextChallenge(castle* arrCastle, const int& nCastle, int& currentCastle, in
         currentEvent = 0;
     }
 }
-
 
 // Mode dependent fuctions
 void pickOrMiss(const int& mode, int* & pick, const int& treasure, bool& gotPaladin, bool& gotLancelot, bool& gotGuinevere)
@@ -154,7 +148,6 @@ void skipIfHaveItem(int* & mustPick, bool gotPaladin, bool gotLancelot, bool got
     else if (*mustPick == 96 && gotLancelot) { mustPick++; }
     else if (*mustPick == 97 && gotGuinevere) { mustPick++; }
 }
-
 void makePermutation(int* srcArray, int* desArray, int leftValue, int rightValue, int& pmtCount)
 {
     if (leftValue == rightValue)
@@ -178,7 +171,6 @@ void makePermutation(int* srcArray, int* desArray, int leftValue, int rightValue
         }
     } 
 }
-
 void saveOptimalRoute(int bFlag, int petal, knight& bestKnight, const knight& theKnight, report& bestReport, int win, int lose)
 {
     static int optimalPetal = 0;
@@ -201,8 +193,6 @@ void saveOptimalRoute(int bFlag, int petal, knight& bestKnight, const knight& th
         }
     }
 }
-
-
 
 // Calculate and return "corresponding" bFlag, along with nWin and nLose
 void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& nPetal, int& bFlag, int& nWin, int& nLose)
@@ -233,7 +223,7 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
     bool isLancelot     = (theKnight.HP == 888) ? true : false; 
     bool isGuinevere    = (theKnight.HP == 777) ? true : false; 
     bool isPaladin      = isPrime(theKnight.HP);
-    bool isDragonKnight = isADragonKnight(theKnight.HP);
+    bool isDragonKnight = isDrgKnight(theKnight.HP);
 
     // One time flags
     bool gotPaladin     = isPaladin;
@@ -464,7 +454,7 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
         if (nPetal) { nPetal--; }
         if (bFlag) { break; }
 
-        nextChallenge(arrCastle, nCastle, currentCastle, currentEvent, theKnight, maxHP);
+        gotoNextChallenge(arrCastle, nCastle, currentCastle, currentEvent, theKnight, maxHP);
         limit(theKnight, maxHP, nPetal);
 
 ////////////////////////////// LOGGING ////////////////////////////////////////////////////////
@@ -499,7 +489,6 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
         
     }
 }
-
 void process2(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& nPetal, int& bFlag, int& nWin, int& nLose)
 {
     // Main idea: Go through every possible route and select the optimal result
@@ -577,6 +566,7 @@ void process2(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
     delete[] arrPermCastleIdx;
 }
 
+// Make a report
 report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mode, int nPetal)
 {
     report* pReturn;
@@ -586,12 +576,10 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
     int nWin = 0;
     int nLose = 0;
 
-    if (mode == 0 || mode == 1)
-    {
+    if (mode == 0 || mode == 1) {
         process1(theKnight, arrCastle, nCastle, mode, nPetal, bFlag, nWin, nLose);
     }
-    else if (mode == 2)
-    {
+    else if (mode == 2) {
         process2(theKnight, arrCastle, nCastle, mode, nPetal, bFlag, nWin, nLose);
     }
     

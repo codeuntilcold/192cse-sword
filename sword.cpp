@@ -35,7 +35,7 @@ bool areFriendlyNumbers(int HP, int gil)
         sum_of_divisors_gil += (gil % i == 0) ? i : 0;
     }    
     
-    if (sum_of_divisors_HP * gil == sum_of_divisors_gil * HP)
+    if (sum_of_divisors_HP * gil == sum_of_divisors_gil * HP && gil != 0 && HP != 0)
         return true;
     else
         return false;
@@ -60,7 +60,7 @@ int factorial(int n)
 }
 
 // Contextual functions
-bool isDrgKnight(const int& HP)
+bool isDrgKnight(int HP)
 {
     if (HP % 2 == 0 && HP != 888) {				// Sum of Pythagorean triples is always even
         for (int x = 1; x < HP / 3 + 1; x++) {
@@ -89,6 +89,7 @@ void loseHP(knight& theKnight, const int& event, const int& levelO)
 }
 void levelUp(int& currentLevel, int desiredLevel, int& maxHP)
 {
+    if (currentLevel == 10) { return; }
     maxHP += (desiredLevel - currentLevel) * 100;
     currentLevel = desiredLevel;
 }
@@ -186,8 +187,9 @@ void saveOptimalRoute(int bFlag, int petal, knight& bestKnight, const knight& th
 
             bestKnight = theKnight;
 
-            // printf("Knight: %d %d %d %d\n", bestKnight.HP, bestKnight.level, bestKnight.antidote, bestKnight.gil);
-            // printf("Optimal petal %d\n", optimalPetal);
+            printf("\n");
+            printf("Knight: %d %d %d %d\n", bestKnight.HP, bestKnight.level, bestKnight.antidote, bestKnight.gil);
+            printf("Report: %d %d %d\n", optimalPetal, win, lose);
             // printf("Win %d\n", bestReport.nWin);
             // printf("Lose %d\n", bestReport.nLose);
         }
@@ -458,33 +460,33 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
         limit(theKnight, maxHP, nPetal);
 
 ////////////////////////////// LOGGING ////////////////////////////////////////////////////////
-// {
-//     static int once = 1;
-//     if (once++ == 1) {
-//     printf("\n");
-//     printf("Identity:   %s%s\n", (isPaladin) ? "Paladin" : "", (isDragonKnight) ? "DragonKnight" : "");
-//     printf("   Csl   Evt   Code  |    HP    lv   atd   gil   | Petal | Psn |  Odin  |  95  |  96  |  97  | Win | Lose |\n"); 
-//     printf("   ------\n"); }
-//     printf("   %d     %2d    %2d    |   %3d   %3d   %3d   %3d   |", currentCastle + 1, i, theEvent, theKnight.HP, theKnight.level, theKnight.antidote, theKnight.gil);
-//     printf("  %3d  |", nPetal);
-//     printf("%3d  |", berryPoison);
-//     printf("   %3d  |", metOdin);
-//     printf(" %3c  |", (gotPaladin)   ? 'x' : ' ');
-//     printf(" %3c  |", (gotLancelot)  ? 'x' : ' ');
-//     printf(" %3c  |", (gotGuinevere) ? 'x' : ' ');
-//     printf(" %3d |", nWin);
-//     printf(" %3d  |", nLose);
-//     if (gotExcalibur)       printf("   Ex");
-//     if (gotLionHeart)       printf("   LnHrt: %d", gotLionHeart);
-//     if (gotScarlH)          printf("   Scrl");
-//     if (gotMithril)         printf("   Mith");
-//     if (hasEternalLove)     printf("   <3");
-//     // if (killedOdin)         printf("   Odin-X");
-//     // if (beatOmg)            printf("   OMG-X");
-//     printf("\n");
-//     if (!currentEvent) 
-//     printf("   ------\n");
-// }
+{
+    static int once = 1;
+    if (once++ == 1) {
+    printf("\n");
+    printf("Identity:   %s%s\n", (isPaladin) ? "Paladin" : "", (isDragonKnight) ? "DragonKnight" : "");
+    printf("   Csl   Evt   Code  |    HP/maxHP    lv   atd   gil   | Petal | Psn |  Odin  |  95  |  96  |  97  | Win | Lose |\n"); 
+    printf("   ------\n"); }
+    printf("   %d     %2d    %2d    |   %3d/%3d    %3d   %3d   %3d   |", currentCastle + 1, i, theEvent, theKnight.HP, maxHP, theKnight.level, theKnight.antidote, theKnight.gil);
+    printf("  %3d  |", nPetal);
+    printf("%3d  |", berryPoison);
+    printf("   %3d  |", metOdin);
+    printf(" %3c  |", (gotPaladin)   ? 'x' : ' ');
+    printf(" %3c  |", (gotLancelot)  ? 'x' : ' ');
+    printf(" %3c  |", (gotGuinevere) ? 'x' : ' ');
+    printf(" %3d |", nWin);
+    printf(" %3d  |", nLose);
+    if (gotExcalibur)       printf("   Ex");
+    if (gotLionHeart)       printf("   LnH");
+    if (gotScarlH)          printf("   Scrl");
+    if (gotMithril)         printf("   Mith");
+    if (hasEternalLove)     printf("   <3");
+    // if (killedOdin)         printf("   Odin-X");
+    // if (beatOmg)            printf("   OMG-X");
+    printf("\n");
+    if (!currentEvent) 
+    printf("   ------\n");
+}
 ///////////////////////////////////////////////////////////////////////////////////////////////
         
     }
@@ -521,7 +523,9 @@ void process2(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
     for (int currentRoute = 0; currentRoute < nPerm; currentRoute++) 
     {
         castle* tempCastle = new castle[nCastle];
-        
+
+        printf("\n-------------------");
+        printf("\nVenture in order: ");
         for (int Index = 0; Index < nCastle; Index++) 
         {
             // Copy -> Make event happen in order
@@ -536,13 +540,9 @@ void process2(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
             // printf("Current castle: %d\n", Index);
             // printf("Castle index: %d ", NewIndex);
             // printf("\n");
-            // printf("Venture in order: %d %d %d %d", 
-            // (tempCastle[Index]).arrEvent[0],
-            // (tempCastle[Index]).arrEvent[1],
-            // (tempCastle[Index]).arrEvent[2],
-            // (tempCastle[Index]).arrEvent[3]);
-            // printf("\n");
+            printf("%d ",NewIndex);
         }
+        printf("\n-------------------\n");
         
         // Fresh start for each route
         theKnight = originalKnight;

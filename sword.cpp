@@ -3,6 +3,51 @@
 #define _definition_h_
 #endif
 
+// My macro
+#ifndef _LOG_EVERY_STATE
+
+#define LOG_OPTIMAL_ROUTE
+#define LOG_STATE_AFTER_EVENT
+#define LOG_INDEX_ORDER_1 
+#define LOG_INDEX_ORDER_2 
+#define LOG_INDEX_ORDER_3 
+
+#else
+
+#define LOG_OPTIMAL_ROUTE \
+    printf("\nKnight: %d %d %d %d\n", bestKnight.HP, bestKnight.level, bestKnight.antidote, bestKnight.gil);\
+    printf("Report: %d %d %d\n", optimalPetal, win, lose)
+
+#define LOG_STATE_AFTER_EVENT \
+    static int once = 1;\
+    if (once++ == 1) {\
+    printf("\n");\
+    printf("Identity:   ---(%s)---\n", (isPaladin) ? "Paladin" : (isDragonKnight) ? "DragonKnight" : (isArthur) ? "Arthur" : (isLancelot) ? "Lancelot" : (isGuinevere) ? "Guinevere" : "Ningen");\
+    printf("   Csl   Evt   Code  |    HP/maxHP    lv   atd   gil   | Petal | Psn |  Odin  |  95  |  96  |  97  | Win | Lose |\n");\
+    printf("   ------\n"); }\
+    printf("   %d     %2d    %2d    |   %3d/%3d    %3d   %3d   %3d   |", currentCastle + 1, i, theEvent, theKnight.HP, maxHP, theKnight.level, theKnight.antidote, theKnight.gil);\
+    printf("  %3d  |", nPetal);\
+    printf("%3d  |", berryPoison);\
+    printf("   %3d  |", metOdin);\
+    printf(" %3c  |", (gotPaladin)   ? 'x' : ' ');\
+    printf(" %3c  |", (gotLancelot)  ? 'x' : ' ');\
+    printf(" %3c  |", (gotGuinevere) ? 'x' : ' ');\
+    printf(" %3d |", nWin);\
+    printf(" %3d  |", nLose);\
+    if (gotExcalibur)       printf("   Ex");\
+    if (gotLionHeart)       printf("   LnH");\
+    if (gotScarlH)          printf("   Scrl");\
+    if (gotMithril)         printf("   Mith");\
+    if (hasEternalLove)     printf("   <3");\
+    printf("\n"); \
+    if (!currentEvent) printf("   ------\n")
+
+#define LOG_INDEX_ORDER_2 \
+    printf("Order: %d\n",NewIndex)
+
+#endif
+
+
 // Mathematics functions
 void swap(int* a, int* b)
 {
@@ -73,7 +118,6 @@ bool isDrgKnight(int HP)
     }
     return false;
 }
-
 void loseHP(knight& theKnight, const int& event, const int& levelO)
 {
     if (event == 99)
@@ -130,7 +174,7 @@ void gotoNextChallenge(castle* arrCastle, const int& nCastle, int& currentCastle
     }
 }
 
-// Mode dependent fuctions
+// Mode-dependent fuctions
 void pickOrMiss(const int& mode, int* & pick, const int& treasure, bool& gotPaladin, bool& gotLancelot, bool& gotGuinevere)
 {
     if (mode == 0 || mode == 2 || mode == 1 && *pick == treasure) {
@@ -187,11 +231,7 @@ void saveOptimalRoute(int bFlag, int petal, knight& bestKnight, const knight& th
 
             bestKnight = theKnight;
 
-            printf("\n");
-            printf("Knight: %d %d %d %d\n", bestKnight.HP, bestKnight.level, bestKnight.antidote, bestKnight.gil);
-            printf("Report: %d %d %d\n", optimalPetal, win, lose);
-            // printf("Win %d\n", bestReport.nWin);
-            // printf("Lose %d\n", bestReport.nLose);
+            LOG_OPTIMAL_ROUTE;
         }
     }
 }
@@ -241,12 +281,12 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
     // Count down flags
     int berryPoison  = 0;
     int gotLionHeart = 0;
-    int metNina = 0;
     int metOdin = 0;
 
     while (nPetal || isArthur)
     {
         // BEFORE EVENTS
+
         theEvent = arrCastle[currentCastle].arrEvent[currentEvent];
         i = currentEvent + 1;
 
@@ -303,11 +343,6 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
                 nWin++;
                 int bonusGil[] = { 0, 100, 150, 450, 650, 850 };
                 theKnight.gil += bonusGil[theEvent];
-                
-                if (berryPoison) 
-                { 
-                    loseHP(theKnight, theEvent, levelO);
-                }
             }
             else
             {
@@ -316,6 +351,10 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
                 { 
                     loseHP(theKnight, theEvent, levelO);
                 }
+            }
+            if (berryPoison) 
+            { 
+                loseHP(theKnight, theEvent, levelO);
             }
         break;
 
@@ -348,8 +387,6 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
         break;
         
         case 8:     // NINA DE RINGS
-            if (!metNina) { metNina = 6; }
-
             if ( !areFriendlyNumbers(theKnight.HP, theKnight.gil) )
             {   
                 if (theKnight.gil < 50) { 
@@ -447,7 +484,6 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
 
         // AFTER EVENTS
         if (gotLionHeart && !isPaladin) { gotLionHeart--; }
-        if (metNina) { metNina--; }
         if (metOdin) { metOdin--; }
         if (mustPick > mustHaveTreasure + 2) { mustPick = mustHaveTreasure + 2; }
 
@@ -459,36 +495,7 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
         gotoNextChallenge(arrCastle, nCastle, currentCastle, currentEvent, theKnight, maxHP);
         limit(theKnight, maxHP, nPetal);
 
-////////////////////////////// LOGGING ////////////////////////////////////////////////////////
-{
-    static int once = 1;
-    if (once++ == 1) {
-    printf("\n");
-    printf("Identity:   %s%s\n", (isPaladin) ? "Paladin" : "", (isDragonKnight) ? "DragonKnight" : "");
-    printf("   Csl   Evt   Code  |    HP/maxHP    lv   atd   gil   | Petal | Psn |  Odin  |  95  |  96  |  97  | Win | Lose |\n"); 
-    printf("   ------\n"); }
-    printf("   %d     %2d    %2d    |   %3d/%3d    %3d   %3d   %3d   |", currentCastle + 1, i, theEvent, theKnight.HP, maxHP, theKnight.level, theKnight.antidote, theKnight.gil);
-    printf("  %3d  |", nPetal);
-    printf("%3d  |", berryPoison);
-    printf("   %3d  |", metOdin);
-    printf(" %3c  |", (gotPaladin)   ? 'x' : ' ');
-    printf(" %3c  |", (gotLancelot)  ? 'x' : ' ');
-    printf(" %3c  |", (gotGuinevere) ? 'x' : ' ');
-    printf(" %3d |", nWin);
-    printf(" %3d  |", nLose);
-    if (gotExcalibur)       printf("   Ex");
-    if (gotLionHeart)       printf("   LnH");
-    if (gotScarlH)          printf("   Scrl");
-    if (gotMithril)         printf("   Mith");
-    if (hasEternalLove)     printf("   <3");
-    // if (killedOdin)         printf("   Odin-X");
-    // if (beatOmg)            printf("   OMG-X");
-    printf("\n");
-    if (!currentEvent) 
-    printf("   ------\n");
-}
-///////////////////////////////////////////////////////////////////////////////////////////////
-        
+        LOG_STATE_AFTER_EVENT;       
     }
 }
 void process2(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& nPetal, int& bFlag, int& nWin, int& nLose)
@@ -498,7 +505,6 @@ void process2(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
     // Create an array of PERMUTED INDEX
     // Ex: 2 castles: { 0,1,  1,0 }                                         nPerm = 2
     //     3 castles: { 0,1,2,  0,2,1,  1,0,2,  1,2,0,  2,0,1,  2,1,0 }     nPerm = 6
-
 
     int castleIdx[] = { 0, 1, 2, 3, 4 };                                // List of possible indexes
     int* arrPermCastleIdx = new int[ nCastle * factorial(nCastle) ];    // A permuted array of indexes
@@ -524,8 +530,6 @@ void process2(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
     {
         castle* tempCastle = new castle[nCastle];
 
-        printf("\n-------------------");
-        printf("\nVenture in order: ");
         for (int Index = 0; Index < nCastle; Index++) 
         {
             // Copy -> Make event happen in order
@@ -536,21 +540,15 @@ void process2(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
             int NewIndex =  arrPermCastleIdx[currentRoute * nCastle + Index];
             tempCastle[Index] = arrCastle[NewIndex];
             
-            // printf("\n");
-            // printf("Current castle: %d\n", Index);
-            // printf("Castle index: %d ", NewIndex);
-            // printf("\n");
-            printf("%d ",NewIndex);
+            LOG_INDEX_ORDER_2;
         }
-        printf("\n-------------------\n");
-        
+
         // Fresh start for each route
         theKnight = originalKnight;
         nPetal = originalPetal;
 
-        process1(theKnight, tempCastle, nCastle, mode, nPetal, bFlag, nWin, nLose);
-        
         // Save route with max nPetal left into bestKnight and bestReport
+        process1(theKnight, tempCastle, nCastle, mode, nPetal, bFlag, nWin, nLose);
         saveOptimalRoute(bFlag, nPetal, bestKnight, theKnight, bestReport, nWin, nLose);
         
         delete[] tempCastle;
@@ -593,5 +591,3 @@ report* walkthrough (knight& theKnight, castle arrCastle[], int nCastle, int mod
     }
     return pReturn;
 }
-
-

@@ -8,6 +8,7 @@
 #define _sword_cpp_
 #endif
 
+#include <time.h>
 
 int maxHP;
 
@@ -167,6 +168,9 @@ int callPhoenix(knight& woundedKnight, int MaxHP)
 //for mode 1 only
 int hash(int eventCode)
 {
+	// if (eventCode == 95) return 2;
+	// if (eventCode == 96) return 1;
+	// if (eventCode == 97) return 3;
 	return eventCode;
 }
 
@@ -195,8 +199,13 @@ int main(int argc, char* argv[])
 		std::cout << std::endl;
 	}
 
+
+	clock_t et;
+	et = clock();
 	pReport = walkthrough (theKnight, arrCastle, nCastle, mode, nPetal);
+	et = clock() - et;
 	display(theKnight,pReport);
+	printf("\nExecution time: %7.5f\n", (float) et / CLOCKS_PER_SEC);
 
 	return 0;
 }

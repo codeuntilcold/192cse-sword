@@ -173,6 +173,14 @@ void gotoNextChallenge(castle* arrCastle, const int& nCastle, int& currentCastle
         currentEvent = 0;
     }
 }
+void instantRelieve(int& berryPoison, bool isGuinevere, int& gil)
+{
+    if (berryPoison)
+    {
+        berryPoison = 0;
+        if (isGuinevere) { gil += 50; }
+    }
+}
 
 // Mode-dependent fuctions
 void pickOrMiss(const int& mode, int* & pick, const int& treasure, bool& gotPaladin, bool& gotLancelot, bool& gotGuinevere)
@@ -369,7 +377,14 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
             else
             {
                 nLose++;
-                if ( !(isPaladin || isDragonKnight) ) { berryPoison = 6; }
+                if ( !(isPaladin || isDragonKnight) ) 
+                { 
+                    berryPoison = 6; 
+                }
+                else
+                {
+                    if (theKnight.antidote) { theKnight.antidote--; }
+                }
             }
         break;
 
@@ -387,34 +402,28 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
         break;
         
         case 8:     // NINA DE RINGS
-            if ( !areFriendlyNumbers(theKnight.HP, theKnight.gil) )
-            {   
-                if (theKnight.gil < 50) { 
-                    break; 
-                }
-                else {
-                    if (berryPoison) 
-                    { 
-                        berryPoison = 0; 
-                        if ( !(gotScarlH || isGuinevere || isPaladin) ) { theKnight.gil -= 50; } 
-                    }
-                    if (theKnight.gil > 0)
-                    {
-                        theKnight.HP += theKnight.gil;
-                        if (isGuinevere) { theKnight.gil += 50; }
-                        
-                        if ( !(gotScarlH || isGuinevere ||isPaladin) ) 
-                        {
-                            theKnight.gil = (theKnight.HP > maxHP) ? (theKnight.HP - maxHP) : 0;
-                        }
-                    }
-                }
-            }
-            else
+            if (areFriendlyNumbers(theKnight.HP, theKnight.gil))
             {
-                berryPoison = 0;
+                instantRelieve(berryPoison, isGuinevere, theKnight.gil);
                 theKnight.HP = maxHP;
+                
                 gotLionHeart = 6;
+            }
+            else if (gotScarlH || isGuinevere || isPaladin)
+            {
+                instantRelieve(berryPoison, isGuinevere, theKnight.gil);
+                theKnight.HP += theKnight.gil;
+            }
+            else if (theKnight.gil >= 50)
+            {
+                instantRelieve(berryPoison, isGuinevere, theKnight.gil);
+                theKnight.gil -= 50;
+
+                if (theKnight.gil > 0)
+                {
+                    theKnight.HP += theKnight.gil;
+                    theKnight.gil = (theKnight.HP > maxHP) ? (theKnight.HP - maxHP) : 0;
+                }
             }
         break;
         

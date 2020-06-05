@@ -165,7 +165,7 @@ void limit(knight& knight, int& maxHP, int& nPetal)
 }
 void gotoNextChallenge(castle* arrCastle, const int& nCastle, int& currentCastle, int& currentEvent, knight& theKnight, int& maxHP)
 {
-    if (currentEvent++ == arrCastle[currentCastle].nEvent - 1)
+    if (currentEvent++ == arrCastle[currentCastle].nEvent - 1 || arrCastle[currentCastle].nEvent == 0)
     {
         levelUp(theKnight.level, theKnight.level + 1, maxHP);
         currentCastle = ++currentCastle % nCastle;
@@ -308,6 +308,10 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
     while (nPetal || isArthur)
     {
         // BEFORE EVENTS
+        if (arrCastle[currentCastle].nEvent == 0) {
+            gotoNextChallenge(arrCastle, nCastle, currentCastle, currentEvent, theKnight, maxHP);
+            continue;
+        }
 
         theEvent = arrCastle[currentCastle].arrEvent[currentEvent];
         i = currentEvent + 1;
@@ -506,9 +510,10 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
         if (nPetal) { nPetal--; }
         if (bFlag) { break; }
 
+        limit(theKnight, maxHP, nPetal);
         gotoNextChallenge(arrCastle, nCastle, currentCastle, currentEvent, theKnight, maxHP);
         limit(theKnight, maxHP, nPetal);
-
+        
         LOG_STATE_AFTER_EVENT;
     }
 }

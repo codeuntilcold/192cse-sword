@@ -146,13 +146,12 @@ void healUp(knight& knight, const int& maxHP, int& berryPoison)
     }
     if (berryPoison)
     {
-        if (knight.antidote > 0) {
+        berryPoison--;
+
+        if (berryPoison && knight.antidote > 0) {
             knight.antidote--;
             berryPoison = 0;
         }
-        else {
-            berryPoison--;
-        } 
     }
 }
 void limit(knight& knight, int& maxHP, int& nPetal)
@@ -173,12 +172,26 @@ void gotoNextChallenge(castle* arrCastle, const int& nCastle, int& currentCastle
         currentEvent = 0;
     }
 }
-void instantRelieve(int& berryPoison, bool isGuinevere, int& gil)
+void goodTrade(int& berryPoison, bool isGuinevere, knight& theKnight, int maxHP)
 {
     if (berryPoison)
     {
         berryPoison = 0;
-        if (isGuinevere) { gil += 50; }
+        if (isGuinevere) { theKnight.gil += 50; }
+    }                
+    theKnight.HP = maxHP;
+}
+void fairTrade(int& berryPoison, knight& theKnight, int maxHP)
+{
+    if (berryPoison)
+    {
+        berryPoison = 0;
+        theKnight.gil -= 50;
+    }                
+    if (theKnight.gil > 0)
+    {
+        theKnight.HP += theKnight.gil;
+        theKnight.gil = (theKnight.HP > maxHP) ? (theKnight.HP - maxHP) : 0;
     }
 }
 
@@ -290,6 +303,7 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
     int berryPoison  = 0;
     int gotLionHeart = 0;
     int metOdin = 0;
+    int metNina = 0;
 
     while (nPetal || isArthur)
     {
@@ -381,10 +395,6 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
                 { 
                     berryPoison = 6; 
                 }
-                else
-                {
-                    if (theKnight.antidote) { theKnight.antidote--; }
-                }
             }
         break;
 
@@ -402,27 +412,21 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
         break;
         
         case 8:     // NINA DE RINGS
-            if (areFriendlyNumbers(theKnight.HP, theKnight.gil))
+            if (!metNina)
             {
-                instantRelieve(berryPoison, isGuinevere, theKnight.gil);
-                theKnight.HP = maxHP;
-                
-                gotLionHeart = 6;
-            }
-            else if (gotScarlH || isGuinevere || isPaladin)
-            {
-                instantRelieve(berryPoison, isGuinevere, theKnight.gil);
-                theKnight.HP += theKnight.gil;
-            }
-            else if (theKnight.gil >= 50)
-            {
-                instantRelieve(berryPoison, isGuinevere, theKnight.gil);
-                theKnight.gil -= 50;
-
-                if (theKnight.gil > 0)
+                metNina = 6; 
+                if (areFriendlyNumbers(theKnight.HP, theKnight.gil))
                 {
-                    theKnight.HP += theKnight.gil;
-                    theKnight.gil = (theKnight.HP > maxHP) ? (theKnight.HP - maxHP) : 0;
+                    goodTrade(berryPoison, isGuinevere, theKnight, maxHP);
+                    gotLionHeart = 6;
+                }
+                else if (gotScarlH || isGuinevere || isPaladin)
+                {
+                    goodTrade(berryPoison, isGuinevere, theKnight, maxHP);
+                }
+                else if (theKnight.gil >= 50)
+                {
+                    fairTrade(berryPoison, theKnight, maxHP);
                 }
             }
         break;
@@ -493,6 +497,7 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
 
         // AFTER EVENTS
         if (gotLionHeart && !isPaladin) { gotLionHeart--; }
+        if (metNina) { metNina--; }
         if (metOdin) { metOdin--; }
         if (mustPick > mustHaveTreasure + 2) { mustPick = mustHaveTreasure + 2; }
 
@@ -504,7 +509,7 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
         gotoNextChallenge(arrCastle, nCastle, currentCastle, currentEvent, theKnight, maxHP);
         limit(theKnight, maxHP, nPetal);
 
-        LOG_STATE_AFTER_EVENT;       
+        LOG_STATE_AFTER_EVENT;
     }
 }
 void process2(knight& theKnight, castle arrCastle[], int nCastle, int mode, int& nPetal, int& bFlag, int& nWin, int& nLose)

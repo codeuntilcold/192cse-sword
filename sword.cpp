@@ -177,8 +177,8 @@ void goodTrade(int& berryPoison, bool isGuinevere, knight& theKnight, int maxHP)
     if (berryPoison)
     {
         berryPoison = 0;
-        if (isGuinevere) { theKnight.gil += 50; }
     }                
+    if (isGuinevere) { theKnight.gil += 50; }
     theKnight.HP = maxHP;
 }
 void fairTrade(int& berryPoison, knight& theKnight, int maxHP)
@@ -344,10 +344,6 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
             {
                 nWin++;
                 bFlag = 1;
-                if (berryPoison) 
-                {
-                    loseHP(theKnight, theEvent, levelO);
-                }
             }
             else
             {
@@ -356,6 +352,10 @@ void process1(knight& theKnight, castle arrCastle[], int nCastle, int mode, int&
                 { 
                     loseHP(theKnight, theEvent, levelO);
                 }
+            }
+            if (berryPoison) 
+            {
+                loseHP(theKnight, theEvent, levelO);
             }
         break;
         
